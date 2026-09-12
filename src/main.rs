@@ -1,8 +1,9 @@
-use axum::{Json, Router, routing::get};
+use axum::{Json, Router, extract::State, routing::get};
 use serde::Serialize;
-use std::{ error::Error, println, sync::{Arc, RwLock}, time::Duration};
+use tokio::sync::RwLock;
+use std::{ error::Error, println, sync::Arc};
 
-#[derive(Serialize)]
+#[derive(Clone,Serialize)]
 struct Bookmark{
     id:u64,
     title:String,
@@ -29,7 +30,7 @@ async fn main() -> Result<(),Box<dyn Error>>{
             url: "https://docs.rs/axum/latest/axum/".to_string(),
         }]))
     };
-
+    
 
     let app=Router::new()
 
@@ -46,16 +47,9 @@ async fn main() -> Result<(),Box<dyn Error>>{
     Ok(())
 }
 
-async fn hello() -> &'static str{
-    tokio::time::sleep(Duration::from_secs(3)).await;
-
-    "Hello, Rust!"
-}
-
-async fn get_bookmarks() -> Json<Vec<Bookmark>>{
-    let bookmarks=vec![
-        
-    ];
-
-    Json(bookmarks)
+async fn get_bookmarks(
+    State(state): State<AppState>
+) -> Json<Vec<Bookmark>>{
+    let bookmarks=state.bookmarks.read().await;
+    Json(bookmarks.clone())
 }
